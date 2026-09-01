@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "alfriendschat",
+  "version": "${version}",
+  "name": "E33Chat",
+  "description": "Rebuilds the vanilla chat HUD in a chat-app style",
+  "authors": [
+    "E33EPUS"
+  ],
+  "license": "MIT",
+  "icon": "logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.alinegames.alfriends.client.ChatBubbleMod"
+    ],
+    "client": [
+      "com.alinegames.alfriends.client.ChatBubbleClientSetup"
+    ],
+    "modmenu": [
+      "com.alinegames.alfriends.client.integration.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    {
+      "config": "alfriendschat.client.mixins.json",
+      "environment": "client"
+    },
+    {
+      "config": "alfriendschat.server.mixins.json"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "1.16.5",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "recommends": {
+    "modmenu": ">=1.16.0"
+  }
+}

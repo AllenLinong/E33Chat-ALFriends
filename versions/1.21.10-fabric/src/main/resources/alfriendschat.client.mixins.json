@@ -1,0 +1,17 @@
+{
+  required: true,
+  minVersion: 0.8,
+  package: com.alinegames.alfriends.client.mixin,
+  compatibilityLevel: JAVA_21,
+  client: [
+    ChatComponentMixin,
+    ChatInputSuggestorMixin,
+    ChatInputSuggestorAccessor,
+    SuggestionWindowAccessor,
+    ScreenAccessor,
+    ChatListenerMixin,
+      MinecraftClientMixin]
+}
+
+
+

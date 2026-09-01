@@ -1,0 +1,69 @@
+package com.alinegames.alfriends.client.mixin;
+
+import com.alinegames.alfriends.client.BedScreen;
+import com.alinegames.alfriends.client.ChatBubbleClientSetup;
+import com.alinegames.alfriends.client.ChatBubbleScreen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.SleepingChatScreen;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.lang.reflect.Field;
+
+//#if MC >= 260200
+import net.minecraft.client.gui.Gui;
+//#endif
+
+//#if MC >= 260200
+@Mixin(Gui.class)
+//#else
+@Mixin(MinecraftClient.class)
+//#endif
+public class MinecraftClientMixin {
+
+    //#if MC < 11700
+    @Inject(method = "openScreen", at = @At("HEAD"), cancellable = true)
+    //#else
+    //$$ @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
+    //#endif
+    private void onSetScreen(Screen screen, CallbackInfo ci) {
+        var cfg = ChatBubbleClientSetup.config();
+        if (cfg == null || !cfg.enabled()) return;
+
+        if (screen instanceof SleepingChatScreen) {
+            ci.cancel();
+            BedScreen.setScreenBeforeSleep(MinecraftClient.getInstance().currentScreen);
+            MinecraftClient.getInstance().setScreen(new BedScreen());
+        } else if (Boolean.TRUE.equals(cfg.overrideVanillaChat())
+                && screen instanceof ChatScreen chatScreen
+                && !(chatScreen instanceof ChatBubbleScreen)) {
+            String initial = getChatInitialText(chatScreen);
+            ci.cancel();
+            MinecraftClient.getInstance().setScreen(new ChatBubbleScreen(initial));
+        }
+    }
+
+    private static String getChatInitialText(ChatScreen chatScreen) {
+        try {
+            Field f = ChatScreen.class.getDeclaredField("initial");
+            f.setAccessible(true);
+            String val = (String) f.get(chatScreen);
+            return val != null ? val : "";
+        } catch (Exception ignored) {}
+        for (Field f : ChatScreen.class.getDeclaredFields()) {
+            if (f.getType() == String.class) {
+                f.setAccessible(true);
+                try {
+                    String val = (String) f.get(chatScreen);
+                    if (val != null && !val.isEmpty()) return val;
+                } catch (Exception ignored) {}
+            }
+        }
+        return "";
+    }
+}
+
