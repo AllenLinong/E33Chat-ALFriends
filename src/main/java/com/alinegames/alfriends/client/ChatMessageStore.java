@@ -52,6 +52,8 @@ public class ChatMessageStore {
     public record FriendContact(UUID uuid, String name, int unread, long lastMessageAt, boolean friend, boolean blocked) {}
     private static final Map<UUID, FriendContact> friendContacts = new LinkedHashMap<>();
     private static final Set<UUID> hiddenRecentContacts = new HashSet<>();
+    private static final Map<String, Long> whisperReadTimes = new HashMap<>();
+    private static boolean whisperReadTimesLoaded;
     private static String openWhisperPartner;
 
     public static void syncFriendContacts(List<ALFriendsContactsPayload.Contact> contacts) {
@@ -60,7 +62,8 @@ public class ChatMessageStore {
             FriendContact existing = friendContacts.get(contact.uuid());
             long lastMessageAt = existing == null ? contact.lastMessageAt()
                 : Math.max(existing.lastMessageAt(), contact.lastMessageAt());
-            int unread = isOpenWhisper(contact.name()) ? 0 : Math.max(0, contact.unread());
+            int unread = isOpenWhisper(contact.name()) || contact.lastMessageAt() <= getWhisperReadTime(contact.uuid())
+                ? 0 : Math.max(0, contact.unread());
             updated.put(contact.uuid(), new FriendContact(contact.uuid(), contact.name(), unread, lastMessageAt, contact.friend(), contact.blocked()));
             rememberPlayer(contact.uuid(), contact.name(), contact.name());
         }
@@ -806,8 +809,9 @@ public class ChatMessageStore {
         if (partner == null) return;
         for (Map.Entry<UUID, FriendContact> entry : friendContacts.entrySet()) {
             FriendContact contact = entry.getValue();
-            if (contact.name().equalsIgnoreCase(partner) && contact.unread() != 0) {
+            if (contact.name().equalsIgnoreCase(partner)) {
                 entry.setValue(new FriendContact(contact.uuid(), contact.name(), 0, contact.lastMessageAt(), contact.friend(), contact.blocked()));
+                markWhisperRead(contact.uuid());
                 return;
             }
         }
@@ -836,6 +840,47 @@ public class ChatMessageStore {
     public static void setScreenOpen(boolean open) {
         screenOpen = open;
         if (!open) openWhisperPartner = null;
+    }
+
+    private static long getWhisperReadTime(UUID partner) {
+        loadWhisperReadTimes();
+        return whisperReadTimes.getOrDefault(readStateKey(partner), 0L);
+    }
+
+    private static void markWhisperRead(UUID partner) {
+        loadWhisperReadTimes();
+        whisperReadTimes.put(readStateKey(partner), System.currentTimeMillis());
+        File file = getWhisperReadFile();
+        File parent = file.getParentFile();
+        if (parent != null) parent.mkdirs();
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+            GSON.toJson(whisperReadTimes, writer);
+        } catch (IOException e) {
+            E33Log.warn("[alfriendschat] Failed to save private-chat read state", e);
+        }
+    }
+
+    private static String readStateKey(UUID partner) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        String player = client.player == null ? "unknown" : client.player.getUuid().toString();
+        return String.valueOf(currentWorldKey) + "|" + player + "|" + partner;
+    }
+
+    private static File getWhisperReadFile() {
+        return new File(MinecraftClient.getInstance().runDirectory, "config/alfriendschat-read-state.json");
+    }
+
+    private static void loadWhisperReadTimes() {
+        if (whisperReadTimesLoaded) return;
+        whisperReadTimesLoaded = true;
+        File file = getWhisperReadFile();
+        if (!file.isFile()) return;
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+            Map<String, Long> loaded = GSON.fromJson(reader, new TypeToken<Map<String, Long>>() {}.getType());
+            if (loaded != null) whisperReadTimes.putAll(loaded);
+        } catch (IOException e) {
+            E33Log.warn("[alfriendschat] Failed to load private-chat read state", e);
+        }
     }
 
     public static boolean hasUnreadMention(String playerName) {

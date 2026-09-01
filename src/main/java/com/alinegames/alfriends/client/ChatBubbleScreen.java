@@ -925,6 +925,9 @@ public class ChatBubbleScreen extends ChatScreen {
         //#endif
             return true;
         //#endif
+        if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_TAB && this.getFocused() == chatField) {
+            return true;
+        }
         if (keyCode == 256) { onClose(); return true; }
         if (quickChatInput.isFocused() && (keyCode == 257 || keyCode == 335)) {
             String text = quickChatInput.getText().trim();

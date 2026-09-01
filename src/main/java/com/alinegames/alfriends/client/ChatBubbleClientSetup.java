@@ -14,6 +14,7 @@ import com.alinegames.alfriends.client.network.ALFriendsMessagePayload;
 import com.alinegames.alfriends.client.network.ALFriendsOpenChatPayload;
 import com.alinegames.alfriends.client.network.ALFriendsContactsPayload;
 import com.alinegames.alfriends.client.network.ALFriendsHistoryPayload;
+import com.alinegames.alfriends.client.network.ALFriendsEmojiCatalogPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -116,6 +117,8 @@ public class ChatBubbleClientSetup implements ClientModInitializer {
             context.client().execute(() -> ChatMessageStore.syncFriendContacts(payload.contacts())));
         ClientPlayNetworking.registerGlobalReceiver(ALFriendsHistoryPayload.ID, (payload, context) ->
             context.client().execute(() -> ChatMessageStore.syncALFriendsHistory(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(ALFriendsEmojiCatalogPayload.ID, (payload, context) ->
+            context.client().execute(() -> ServerEmojiStore.setEntries(payload.entries())));
         //#endif
 
         // On disconnect: immediately set the volatile flag from the network thread.
@@ -127,6 +130,7 @@ public class ChatBubbleClientSetup implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             ALFriendsBridge.setActive(false);
             ChatMessageStore.clearFriendContacts();
+            ServerEmojiStore.clear();
             ChatMessageStore.clearServerPlayerPresentation();
             BlurRenderer.disconnecting = true;
             ImageLoader.setEnabled(false);

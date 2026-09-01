@@ -26,6 +26,7 @@ public final class PayloadIds {
     public static Identifier openChat() { return of(chars('o', 'p', 'e', 'n', '_', 'c', 'h', 'a', 't')); }
     public static Identifier contacts() { return of(chars('c', 'o', 'n', 't', 'a', 'c', 't', 's')); }
     public static Identifier history() { return of(chars('h', 'i', 's', 't', 'o', 'r', 'y')); }
+    public static Identifier emojiCatalog() { return of(chars('e', 'm', 'o', 'j', 'i', '_', 'c', 'a', 't', 'a', 'l', 'o', 'g')); }
 
     private static String chars(char... value) { return new String(value); }
 }

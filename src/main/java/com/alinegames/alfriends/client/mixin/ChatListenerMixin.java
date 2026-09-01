@@ -279,8 +279,8 @@ public class ChatListenerMixin {
 
     private static boolean isServerStatusMessage(String text) {
         String lower = text == null ? "" : text.toLowerCase(Locale.ROOT);
-        return lower.contains("??????") || lower.contains("??????")
-            || lower.contains("????") || lower.contains("????")
+        return lower.contains("加入了游戏") || lower.contains("离开了游戏")
+            || lower.contains("加入服务器") || lower.contains("离开服务器")
             || lower.contains(" joined the game") || lower.contains(" left the game")
             || lower.contains(" joined the server") || lower.contains(" left the server");
     }

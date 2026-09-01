@@ -21,6 +21,7 @@ import com.alinegames.alfriends.client.network.ALFriendsMessagePayload;
 import com.alinegames.alfriends.client.network.ALFriendsOpenChatPayload;
 import com.alinegames.alfriends.client.network.ALFriendsContactsPayload;
 import com.alinegames.alfriends.client.network.ALFriendsHistoryPayload;
+import com.alinegames.alfriends.client.network.ALFriendsEmojiCatalogPayload;
 import com.alinegames.alfriends.client.server.DiskMediaStore;
 import net.fabricmc.api.ModInitializer;
 import com.mojang.brigadier.ParseResults;
@@ -115,6 +116,7 @@ public class ChatBubbleMod implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(ALFriendsOpenChatPayload.ID, ALFriendsOpenChatPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(ALFriendsContactsPayload.ID, ALFriendsContactsPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(ALFriendsHistoryPayload.ID, ALFriendsHistoryPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(ALFriendsEmojiCatalogPayload.ID, ALFriendsEmojiCatalogPayload.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(MediaUploadPayload.ID, (payload, context) -> {
             ServerPlayerEntity player = context.player();

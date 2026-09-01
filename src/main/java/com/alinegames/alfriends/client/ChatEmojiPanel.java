@@ -135,9 +135,10 @@ public class ChatEmojiPanel {
             TextRenderer font, ChatBubbleTheme.Colors c,
             int px, int cy, int pw, int ch, float alpha) {
         int a255 = (int) (255 * alpha);
+        java.util.List<com.alinegames.alfriends.client.network.ALFriendsEmojiCatalogPayload.Entry> serverEmotes = ServerEmojiStore.entries();
         java.util.List<java.io.File> emotes = EmoteStore.list();
         int cols = Math.max(1, (pw - 8) / EMOTE_SLOT);
-        int n = emotes.size() + 1; // +1 add slot
+        int n = serverEmotes.size() + emotes.size() + 1; // +1 add slot
         int rows = (n + cols - 1) / cols;
         int totalH = rows * EMOTE_SLOT + 4;
         int maxScroll = Math.max(0, totalH - ch + 4);
@@ -157,8 +158,14 @@ public class ChatEmojiPanel {
                 ColoredTextureRenderer.drawWithAlpha(g,
                     com.alinegames.alfriends.client.texture.UiTextureManager.rl(com.alinegames.alfriends.client.texture.UiElement.HOVER_BG),
                     ex, ey, EMOTE_SLOT - 1, EMOTE_SLOT - 1, alpha);
-            if (i < emotes.size()) {
-                java.io.File f = emotes.get(i);
+            if (i < serverEmotes.size()) {
+                String glyph = serverEmotes.get(i).glyph();
+                int glyphW = font.getWidth(glyph);
+                RenderHelper.drawText(g, font, glyph, ex + (EMOTE_SLOT - glyphW) / 2,
+                    ey + (EMOTE_SLOT - font.fontHeight) / 2,
+                    com.alinegames.alfriends.client.ChatBubbleTheme.alphaBlend(c.textPrimary(), a255), false);
+            } else if (i < serverEmotes.size() + emotes.size()) {
+                java.io.File f = emotes.get(i - serverEmotes.size());
                 net.minecraft.util.Identifier tex = EmoteStore.texture(f);
                 if (tex != null)
                     ColoredTextureRenderer.drawWithAlpha(g, tex, ex + 4, ey + 4, EMOTE_SLOT - 8, EMOTE_SLOT - 8, alpha);
@@ -282,13 +289,16 @@ public class ChatEmojiPanel {
             if (idx >= 0 && idx < KAO.length) return KAO[idx];
         } else if (isCustom) {
             int cols = Math.max(1, (pw - 8) / EMOTE_SLOT);
+            java.util.List<com.alinegames.alfriends.client.network.ALFriendsEmojiCatalogPayload.Entry> serverEmotes = ServerEmojiStore.entries();
             java.util.List<java.io.File> emotes = EmoteStore.list();
             int col = (mx - px - 4) / EMOTE_SLOT;
             int row = (my - cy - 2 + scroll) / EMOTE_SLOT;
             int idx = row * cols + col;
             if (idx < 0) return null;
-            if (idx < emotes.size()) {
-                java.io.File f = emotes.get(idx);
+            if (idx < serverEmotes.size()) return serverEmotes.get(idx).glyph();
+            int localIdx = idx - serverEmotes.size();
+            if (localIdx < emotes.size()) {
+                java.io.File f = emotes.get(localIdx);
                 int ex = px + 4 + col * EMOTE_SLOT;
                 int ey = cy + 2 - scroll + row * EMOTE_SLOT;
                 if (mx >= ex + EMOTE_SLOT - 10 && mx <= ex + EMOTE_SLOT
@@ -296,7 +306,7 @@ public class ChatEmojiPanel {
                     return "@EMOTE_DEL:" + f.getAbsolutePath();
                 return "@EMOTE:" + f.getAbsolutePath();
             }
-            if (idx == emotes.size()) return "@EMOTE_ADD";
+            if (localIdx == emotes.size()) return "@EMOTE_ADD";
             return null;
         } else {
             int cols = gridCols(pw);
@@ -316,7 +326,7 @@ public class ChatEmojiPanel {
             totalH = ((KAO.length + KAO_COLS - 1) / KAO_COLS) * KAO_ITEM_H + 4;
         } else if (isCustom) {
             int cols = EMOTE_COLS;
-            int n = EmoteStore.list().size() + 1;
+            int n = ServerEmojiStore.entries().size() + EmoteStore.list().size() + 1;
             totalH = ((n + cols - 1) / cols) * EMOTE_SLOT + 4;
         } else {
             int rows = (EMOTES.length + COLS - 1) / COLS;
